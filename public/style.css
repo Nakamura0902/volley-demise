@@ -664,6 +664,30 @@ main {
   color: var(--text-sub);
 }
 
+.btn-delete {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 2px solid #FECACA;
+  background: var(--white);
+  color: var(--paypay-red);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.btn-delete:hover {
+  background: var(--paypay-red);
+  color: var(--white);
+}
+
+.row-deleting {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
 .btn-payment-confirm {
   padding: 5px 12px;
   border-radius: 20px;

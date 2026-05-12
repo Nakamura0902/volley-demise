@@ -68,6 +68,7 @@ function renderOrders(orders) {
         <td data-label="支払方法">${badge}</td>
         <td data-label="送金確認">${paymentBtn}</td>
         <td data-label="受け取り">${receivedBtn}</td>
+        <td data-label="削除"><button class="btn-delete" onclick="deleteOrder(${o.id}, '${esc(o.customer_name)}')">削除</button></td>
       </tr>`;
   }).join("");
 
@@ -82,6 +83,7 @@ function renderOrders(orders) {
           <th>支払方法</th>
           <th>送金確認</th>
           <th>受け取り</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -171,6 +173,21 @@ function togglePaymentConfirmed(id, current) {
       btn.textContent = current ? "送金済み ✓" : "未確認";
       btn.classList.toggle("confirmed", current);
     });
+}
+
+function deleteOrder(id, name) {
+  if (!confirm(`「${name}」の注文を削除しますか？\nこの操作は元に戻せません。`)) return;
+
+  fetch(`/api/orders/${id}?key=${encodeURIComponent(adminKey)}`, {
+    method: "DELETE",
+  })
+    .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+    .then(() => {
+      const row = document.getElementById("order-row-" + id);
+      row.classList.add("row-deleting");
+      setTimeout(() => { row.remove(); loadOrders(); }, 300);
+    })
+    .catch(() => alert("削除に失敗しました。もう一度お試しください。"));
 }
 
 function esc(str) {

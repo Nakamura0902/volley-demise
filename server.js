@@ -93,6 +93,24 @@ app.patch("/api/orders/:id/received", async (req, res) => {
   }
 });
 
+// DELETE /api/orders/:id?key=ADMIN_KEY — 注文を削除
+app.delete("/api/orders/:id", async (req, res) => {
+  if (req.query.key !== process.env.ADMIN_KEY) {
+    return res.status(401).json({ error: "unauthorized" });
+  }
+  try {
+    const result = await pool.query(
+      "DELETE FROM orders WHERE id = $1 RETURNING id",
+      [req.params.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: "not found" });
+    res.json({ deleted: result.rows[0].id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "db error" });
+  }
+});
+
 // GET /api/orders?key=ADMIN_KEY — 全注文取得（管理者のみ）
 app.get("/api/orders", async (req, res) => {
   if (req.query.key !== process.env.ADMIN_KEY) {
