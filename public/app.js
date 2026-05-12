@@ -1,7 +1,7 @@
 // ── 設定（デプロイ前にここを書き換えてください）──
 const CONFIG = {
-  paypayLink: "https://qr.paypay.ne.jp/p2p01_XXXXXXXXXXXXXXXX", // PayPay個人送金リンク
-  paypayId:   "your-paypay-id",                                  // 表示用PayPay ID
+  paypayLink: "https://qr.paypay.ne.jp/p2p01_0WZxyr9dGfu6a4wk", // PayPay個人送金リンク
+  paypayId:   "ayatin0092",                                  // 表示用PayPay ID
 };
 
 // ── 商品定義 ──
