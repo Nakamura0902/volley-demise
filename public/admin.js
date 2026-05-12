@@ -90,8 +90,10 @@ function renderOrders(orders) {
 
 function renderStats(orders) {
   const totalSales = orders.reduce((s, o) => s + Number(o.total), 0);
-  const cashCount = orders.filter(o => o.payment_method === "cash").length;
-  const paypayCount = orders.filter(o => o.payment_method === "paypay").length;
+  const cashOrders = orders.filter(o => o.payment_method === "cash");
+  const paypayOrders = orders.filter(o => o.payment_method === "paypay");
+  const cashSales = cashOrders.reduce((s, o) => s + Number(o.total), 0);
+  const paypaySales = paypayOrders.reduce((s, o) => s + Number(o.total), 0);
   const pendingCount = orders.filter(o => !o.received).length;
 
   document.getElementById("admin-stats").innerHTML = `
@@ -104,12 +106,12 @@ function renderStats(orders) {
       <div class="stat-value">¥${totalSales.toLocaleString()}</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">現金</div>
-      <div class="stat-value">${cashCount}</div>
+      <div class="stat-label">💴 現金売上（${cashOrders.length}件）</div>
+      <div class="stat-value">¥${cashSales.toLocaleString()}</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">PayPay</div>
-      <div class="stat-value">${paypayCount}</div>
+      <div class="stat-label">📱 PayPay売上（${paypayOrders.length}件）</div>
+      <div class="stat-value">¥${paypaySales.toLocaleString()}</div>
     </div>
     <div class="stat-card stat-card-pending">
       <div class="stat-label">未受け取り</div>
