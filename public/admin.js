@@ -51,13 +51,17 @@ function renderOrders(orders) {
       month: "numeric", day: "numeric",
       hour: "2-digit", minute: "2-digit",
     });
+    const receivedBtn = o.received
+      ? `<button class="btn-received received" onclick="toggleReceived(${o.id}, true)">受け取り済み ✓</button>`
+      : `<button class="btn-received"           onclick="toggleReceived(${o.id}, false)">未受け取り</button>`;
     return `
-      <tr>
+      <tr id="order-row-${o.id}" class="${o.received ? "row-received" : ""}">
         <td data-label="時刻">${time}</td>
         <td data-label="お名前"><strong>${esc(o.customer_name)}</strong></td>
         <td data-label="注文内容">${items}</td>
         <td data-label="合計">¥${Number(o.total).toLocaleString()}</td>
         <td data-label="支払方法">${badge}</td>
+        <td data-label="受け取り">${receivedBtn}</td>
       </tr>`;
   }).join("");
 
@@ -70,6 +74,7 @@ function renderOrders(orders) {
           <th>注文内容</th>
           <th>合計</th>
           <th>支払方法</th>
+          <th>受け取り</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -80,6 +85,7 @@ function renderStats(orders) {
   const totalSales = orders.reduce((s, o) => s + Number(o.total), 0);
   const cashCount = orders.filter(o => o.payment_method === "cash").length;
   const paypayCount = orders.filter(o => o.payment_method === "paypay").length;
+  const pendingCount = orders.filter(o => !o.received).length;
 
   document.getElementById("admin-stats").innerHTML = `
     <div class="stat-card">
@@ -97,7 +103,41 @@ function renderStats(orders) {
     <div class="stat-card">
       <div class="stat-label">PayPay</div>
       <div class="stat-value">${paypayCount}</div>
+    </div>
+    <div class="stat-card stat-card-pending">
+      <div class="stat-label">未受け取り</div>
+      <div class="stat-value ${pendingCount > 0 ? "stat-pending" : ""}">${pendingCount}</div>
     </div>`;
+}
+
+function toggleReceived(id, current) {
+  const newVal = !current;
+  const row = document.getElementById("order-row-" + id);
+  const btn = row.querySelector(".btn-received");
+
+  // 楽観的UI更新
+  btn.textContent = newVal ? "受け取り済み ✓" : "未受け取り";
+  btn.classList.toggle("received", newVal);
+  row.classList.toggle("row-received", newVal);
+
+  fetch(`/api/orders/${id}/received?key=${encodeURIComponent(adminKey)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ received: newVal }),
+  })
+    .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+    .then(updated => {
+      // onclick を新しい状態に更新
+      btn.setAttribute("onclick", `toggleReceived(${id}, ${updated.received})`);
+      // サマリーを再集計するため全データを再取得
+      loadOrders();
+    })
+    .catch(() => {
+      // 失敗時は元に戻す
+      btn.textContent = current ? "受け取り済み ✓" : "未受け取り";
+      btn.classList.toggle("received", current);
+      row.classList.toggle("row-received", current);
+    });
 }
 
 function esc(str) {

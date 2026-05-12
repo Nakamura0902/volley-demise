@@ -618,6 +618,42 @@ main {
   color: var(--text-sub);
 }
 
+.btn-received {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 2px solid var(--border);
+  background: var(--white);
+  color: var(--text-sub);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.btn-received.received {
+  background: #F0FDF4;
+  color: #15803D;
+  border-color: #86EFAC;
+}
+
+.row-received td {
+  opacity: 0.5;
+}
+
+.row-received td:last-child {
+  opacity: 1;
+}
+
+.stat-card-pending {
+  border-color: #FDBA74;
+}
+
+.stat-pending {
+  color: var(--paypay-red) !important;
+}
+
 @media (max-width: 600px) {
   .order-table thead { display: none; }
   .order-table tr {
