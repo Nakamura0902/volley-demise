@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ご注文はこちら</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ① メニュー選択画面 -->
+  <div id="screen-menu" class="screen active">
+    <header class="page-header">
+      <h1>ご注文</h1>
+    </header>
+
+    <main class="menu-list">
+
+      <!-- 焼き鳥 -->
+      <div class="menu-item">
+        <div class="menu-info">
+          <span class="menu-name">焼き鳥</span>
+          <span class="menu-price">¥100 / 1本</span>
+        </div>
+        <div class="counter">
+          <button class="counter-btn" onclick="change('yakitori', -1)">−</button>
+          <span class="counter-val" id="qty-yakitori">0</span>
+          <button class="counter-btn" onclick="change('yakitori', 1)">＋</button>
+        </div>
+      </div>
+
+      <!-- チョコバナナ 1本 -->
+      <div class="menu-item">
+        <div class="menu-info">
+          <span class="menu-name">チョコバナナ</span>
+          <span class="menu-label">1本</span>
+          <span class="menu-price">¥500 / 1本</span>
+        </div>
+        <div class="counter">
+          <button class="counter-btn" onclick="change('chocoBananaFull', -1)">−</button>
+          <span class="counter-val" id="qty-chocoBananaFull">0</span>
+          <button class="counter-btn" onclick="change('chocoBananaFull', 1)">＋</button>
+        </div>
+      </div>
+
+      <!-- チョコバナナ 半分 -->
+      <div class="menu-item">
+        <div class="menu-info">
+          <span class="menu-name">チョコバナナ</span>
+          <span class="menu-label">半分</span>
+          <span class="menu-price">¥300 / 半分</span>
+        </div>
+        <div class="counter">
+          <button class="counter-btn" onclick="change('chocoBananaHalf', -1)">−</button>
+          <span class="counter-val" id="qty-chocoBananaHalf">0</span>
+          <button class="counter-btn" onclick="change('chocoBananaHalf', 1)">＋</button>
+        </div>
+      </div>
+
+      <!-- スープ -->
+      <div class="menu-item">
+        <div class="menu-info">
+          <span class="menu-name">スープ</span>
+          <span class="menu-label">紙コップ1杯</span>
+          <span class="menu-price">¥200 / 杯</span>
+        </div>
+        <div class="counter">
+          <button class="counter-btn" onclick="change('soup', -1)">−</button>
+          <span class="counter-val" id="qty-soup">0</span>
+          <button class="counter-btn" onclick="change('soup', 1)">＋</button>
+        </div>
+      </div>
+      <p class="soup-note">※ スープの種類（たまご・コンソメ・コーンポタージュ）は<br>受け取り時にスタッフへお申し付けください</p>
+
+    </main>
+
+    <footer class="sticky-footer">
+      <div class="total-bar">
+        <span>合計</span>
+        <span id="menu-total" class="total-amount">¥0</span>
+      </div>
+      <button id="btn-order" class="btn-primary" onclick="goToPaymentScreen()" disabled>注文する</button>
+    </footer>
+  </div>
+
+  <!-- ② 支払い選択画面 -->
+  <div id="screen-payment" class="screen">
+    <header class="page-header">
+      <button class="back-btn" onclick="showScreen('menu')">← 戻る</button>
+      <h1>お支払い方法</h1>
+    </header>
+
+    <main>
+      <section class="order-summary">
+        <h2 class="section-title">ご注文内容</h2>
+        <ul id="payment-order-list" class="order-list"></ul>
+        <div class="order-total">
+          <span>合計</span>
+          <span id="payment-total" class="total-amount"></span>
+        </div>
+      </section>
+
+      <section class="name-section">
+        <label class="name-label" for="customer-name">お名前（受け取り用）</label>
+        <input
+          id="customer-name"
+          class="name-input"
+          type="text"
+          placeholder="例：田中"
+          maxlength="30"
+          oninput="onNameInput()"
+        >
+      </section>
+
+      <section class="payment-options">
+        <button id="btn-cash" class="btn-payment btn-cash" onclick="goToCashScreen()" disabled>
+          <span class="payment-icon">💴</span>
+          <span>現金で払う</span>
+        </button>
+        <button id="btn-paypay" class="btn-payment btn-paypay" onclick="goToPayPayScreen()" disabled>
+          <span class="payment-icon">📱</span>
+          <span>PayPayで払う</span>
+        </button>
+      </section>
+    </main>
+  </div>
+
+  <!-- ③ 現金確認画面 -->
+  <div id="screen-cash" class="screen">
+    <header class="page-header">
+      <h1>ご注文確認</h1>
+    </header>
+
+    <main>
+      <div class="confirm-icon">✅</div>
+      <p class="confirm-message">ご注文を承りました！</p>
+
+      <section class="order-summary">
+        <div class="confirm-name" id="cash-customer-name"></div>
+        <h2 class="section-title">ご注文内容</h2>
+        <ul id="cash-order-list" class="order-list"></ul>
+        <div class="order-total">
+          <span>合計</span>
+          <span id="cash-total" class="total-amount"></span>
+        </div>
+      </section>
+
+      <div class="info-box">
+        <p>レジにてお支払いください</p>
+      </div>
+
+      <div id="cash-soup-note" class="soup-alert" style="display:none">
+        スープの種類（たまご・コンソメ・コーンポタージュ）は<br>
+        受け取り時にスタッフへお申し付けください
+      </div>
+
+      <button class="btn-primary" onclick="resetOrder()">最初に戻る</button>
+    </main>
+  </div>
+
+  <!-- ④ PayPay送金画面 -->
+  <div id="screen-paypay" class="screen">
+    <header class="page-header">
+      <h1>PayPay送金</h1>
+    </header>
+
+    <main>
+      <section class="paypay-section">
+        <p class="paypay-label">お支払い金額</p>
+        <p id="paypay-amount" class="paypay-amount"></p>
+        <p class="paypay-id-label">送金先 PayPay ID</p>
+        <p id="paypay-id" class="paypay-id"></p>
+        <a id="paypay-link" href="#" target="_blank" rel="noopener" class="btn-primary btn-paypay-send">
+          PayPayで送金する
+        </a>
+      </section>
+
+      <section class="order-summary">
+        <div class="confirm-name" id="paypay-customer-name"></div>
+        <h2 class="section-title">ご注文内容</h2>
+        <ul id="paypay-order-list" class="order-list"></ul>
+      </section>
+
+      <div class="info-box">
+        <p>送金後、スタッフにお声がけください</p>
+      </div>
+
+      <div id="paypay-soup-note" class="soup-alert" style="display:none">
+        スープの種類（たまご・コンソメ・コーンポタージュ）は<br>
+        受け取り時にスタッフへお申し付けください
+      </div>
+
+      <button class="btn-secondary" onclick="resetOrder()">最初に戻る</button>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

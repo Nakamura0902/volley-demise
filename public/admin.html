@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>注文管理</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body style="background:#FAFAF9; min-height:100vh;">
+
+  <!-- ログインオーバーレイ -->
+  <div id="login-overlay" class="login-overlay">
+    <div class="login-box">
+      <h2>管理者パスワード</h2>
+      <p id="login-error" class="login-error" style="display:none">パスワードが違います</p>
+      <input id="admin-password" type="password" placeholder="パスワードを入力" onkeydown="if(event.key==='Enter')login()">
+      <button class="btn-primary" onclick="login()">ログイン</button>
+    </div>
+  </div>
+
+  <!-- 管理画面 -->
+  <div class="admin-wrap" id="admin-content" style="display:none">
+    <div class="admin-header">
+      <h1>注文管理</h1>
+      <button class="btn-refresh" onclick="loadOrders()">更新</button>
+    </div>
+
+    <div class="admin-stats" id="admin-stats"></div>
+
+    <div id="orders-container">
+      <div class="empty-state">読み込み中...</div>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
