@@ -54,6 +54,11 @@ function renderOrders(orders) {
     const receivedBtn = o.received
       ? `<button class="btn-received received" onclick="toggleReceived(${o.id}, true)">受け取り済み ✓</button>`
       : `<button class="btn-received"           onclick="toggleReceived(${o.id}, false)">未受け取り</button>`;
+    const paymentBtn = o.payment_method === "paypay"
+      ? (o.payment_confirmed
+          ? `<button class="btn-payment-confirm confirmed" onclick="togglePaymentConfirmed(${o.id}, true)">送金済み ✓</button>`
+          : `<button class="btn-payment-confirm"           onclick="togglePaymentConfirmed(${o.id}, false)">未確認</button>`)
+      : `<span class="badge badge-cash" style="font-size:0.75rem">現金</span>`;
     return `
       <tr id="order-row-${o.id}" class="${o.received ? "row-received" : ""}">
         <td data-label="時刻">${time}</td>
@@ -61,6 +66,7 @@ function renderOrders(orders) {
         <td data-label="注文内容">${items}</td>
         <td data-label="合計">¥${Number(o.total).toLocaleString()}</td>
         <td data-label="支払方法">${badge}</td>
+        <td data-label="送金確認">${paymentBtn}</td>
         <td data-label="受け取り">${receivedBtn}</td>
       </tr>`;
   }).join("");
@@ -74,6 +80,7 @@ function renderOrders(orders) {
           <th>注文内容</th>
           <th>合計</th>
           <th>支払方法</th>
+          <th>送金確認</th>
           <th>受け取り</th>
         </tr>
       </thead>
@@ -137,6 +144,30 @@ function toggleReceived(id, current) {
       btn.textContent = current ? "受け取り済み ✓" : "未受け取り";
       btn.classList.toggle("received", current);
       row.classList.toggle("row-received", current);
+    });
+}
+
+function togglePaymentConfirmed(id, current) {
+  const newVal = !current;
+  const row = document.getElementById("order-row-" + id);
+  const btn = row.querySelector(".btn-payment-confirm");
+
+  btn.textContent = newVal ? "送金済み ✓" : "未確認";
+  btn.classList.toggle("confirmed", newVal);
+
+  fetch(`/api/orders/${id}/payment-confirmed?key=${encodeURIComponent(adminKey)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ paymentConfirmed: newVal }),
+  })
+    .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+    .then(updated => {
+      btn.setAttribute("onclick", `togglePaymentConfirmed(${id}, ${updated.payment_confirmed})`);
+      loadOrders();
+    })
+    .catch(() => {
+      btn.textContent = current ? "送金済み ✓" : "未確認";
+      btn.classList.toggle("confirmed", current);
     });
 }
 

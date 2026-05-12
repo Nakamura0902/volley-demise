@@ -26,6 +26,9 @@ async function initDb() {
   await pool.query(`
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS received BOOLEAN DEFAULT FALSE
   `);
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_confirmed BOOLEAN DEFAULT FALSE
+  `);
 }
 
 // POST /api/orders — 注文を保存
@@ -39,6 +42,28 @@ app.post("/api/orders", async (req, res) => {
       "INSERT INTO orders (customer_name, items, total, payment_method) VALUES ($1, $2, $3, $4) RETURNING *",
       [customerName, JSON.stringify(items), total, paymentMethod]
     );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "db error" });
+  }
+});
+
+// PATCH /api/orders/:id/payment-confirmed?key=ADMIN_KEY — 送金確認ステータスを更新
+app.patch("/api/orders/:id/payment-confirmed", async (req, res) => {
+  if (req.query.key !== process.env.ADMIN_KEY) {
+    return res.status(401).json({ error: "unauthorized" });
+  }
+  const { paymentConfirmed } = req.body;
+  if (typeof paymentConfirmed !== "boolean") {
+    return res.status(400).json({ error: "paymentConfirmed must be boolean" });
+  }
+  try {
+    const result = await pool.query(
+      "UPDATE orders SET payment_confirmed = $1 WHERE id = $2 RETURNING *",
+      [paymentConfirmed, req.params.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: "not found" });
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);

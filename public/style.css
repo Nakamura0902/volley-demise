@@ -664,6 +664,26 @@ main {
   color: var(--text-sub);
 }
 
+.btn-payment-confirm {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 2px solid #FECACA;
+  background: #FFF0F0;
+  color: var(--paypay-red);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.btn-payment-confirm.confirmed {
+  background: #F0FDF4;
+  color: #15803D;
+  border-color: #86EFAC;
+}
+
 .btn-received {
   padding: 5px 12px;
   border-radius: 20px;
