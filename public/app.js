@@ -126,6 +126,7 @@ async function goToPayPayScreen() {
   const total = calcTotal();
   document.getElementById("paypay-amount").textContent = "¥" + total.toLocaleString();
   document.getElementById("paypay-id").textContent = CONFIG.paypayId;
+  document.getElementById("paypay-name-hint").textContent = name;
   document.getElementById("paypay-customer-name").textContent = `${name} 様`;
   document.getElementById("paypay-order-list").innerHTML = buildOrderSummaryHTML();
   document.getElementById("paypay-soup-note").style.display = cart.soup > 0 ? "block" : "none";
