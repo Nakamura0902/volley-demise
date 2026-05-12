@@ -1,7 +1,5 @@
-// ── 設定（デプロイ前にここを書き換えてください）──
 const CONFIG = {
-  paypayLink: "https://qr.paypay.ne.jp/p2p01_0WZxyr9dGfu6a4wk", // PayPay個人送金リンク
-  paypayId:   "ayatin0092",                                  // 表示用PayPay ID
+  paypayId: "ayatin0092",
 };
 
 // ── 商品定義 ──
@@ -128,11 +126,20 @@ async function goToPayPayScreen() {
   const total = calcTotal();
   document.getElementById("paypay-amount").textContent = "¥" + total.toLocaleString();
   document.getElementById("paypay-id").textContent = CONFIG.paypayId;
-  document.getElementById("paypay-link").href = CONFIG.paypayLink;
   document.getElementById("paypay-customer-name").textContent = `${name} 様`;
   document.getElementById("paypay-order-list").innerHTML = buildOrderSummaryHTML();
   document.getElementById("paypay-soup-note").style.display = cart.soup > 0 ? "block" : "none";
+  document.getElementById("copy-toast").style.display = "none";
   showScreen("paypay");
+}
+
+// ── PayPay ID コピー ──
+function copyPayPayId() {
+  navigator.clipboard.writeText(CONFIG.paypayId).then(() => {
+    const toast = document.getElementById("copy-toast");
+    toast.style.display = "block";
+    setTimeout(() => { toast.style.display = "none"; }, 2000);
+  });
 }
 
 // ── 最初に戻る ──

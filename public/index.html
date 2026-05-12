@@ -170,11 +170,24 @@
       <section class="paypay-section">
         <p class="paypay-label">お支払い金額</p>
         <p id="paypay-amount" class="paypay-amount"></p>
+
+        <div class="paypay-steps">
+          <p class="paypay-steps-title">PayPayアプリで送金してください</p>
+          <ol class="paypay-step-list">
+            <li>PayPayアプリを開く</li>
+            <li>「送る」をタップ</li>
+            <li>「ID・電話番号で送る」を選択</li>
+            <li>下のIDを入力して検索</li>
+            <li>金額を入力して送金</li>
+          </ol>
+        </div>
+
         <p class="paypay-id-label">送金先 PayPay ID</p>
-        <p id="paypay-id" class="paypay-id"></p>
-        <a id="paypay-link" href="#" target="_blank" rel="noopener" class="btn-primary btn-paypay-send">
-          PayPayで送金する
-        </a>
+        <div class="paypay-id-box">
+          <span id="paypay-id" class="paypay-id"></span>
+          <button class="btn-copy" onclick="copyPayPayId()">コピー</button>
+        </div>
+        <p id="copy-toast" class="copy-toast" style="display:none">コピーしました</p>
       </section>
 
       <section class="order-summary">

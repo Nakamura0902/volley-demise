@@ -435,13 +435,59 @@ main {
   word-break: break-all;
 }
 
-.btn-paypay-send {
-  background: var(--paypay-red);
+.paypay-steps {
+  background: #FFF0F0;
+  border: 1px solid #FECACA;
+  border-radius: 12px;
+  padding: 14px 18px;
   margin-bottom: 20px;
-  line-height: 52px;
+  text-align: left;
 }
 
-.btn-paypay-send:hover { background: #C0001A; }
+.paypay-steps-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--paypay-red);
+  margin-bottom: 8px;
+}
+
+.paypay-step-list {
+  padding-left: 20px;
+  font-size: 0.9rem;
+  line-height: 2;
+  color: var(--text);
+}
+
+.paypay-id-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.btn-copy {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--text-sub);
+  flex-shrink: 0;
+}
+
+.btn-copy:active {
+  background: #F5F5F4;
+}
+
+.copy-toast {
+  font-size: 0.8rem;
+  color: var(--green);
+  font-weight: 600;
+  margin-bottom: 12px;
+}
 
 /* ── screen padding for main ── */
 #screen-payment main,
