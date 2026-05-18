@@ -149,6 +149,18 @@ html, body {
   font-weight: 700;
 }
 
+/* ── gamble menu ── */
+.menu-item--gamble {
+  background: #FFFBEB;
+  border-bottom: 1px solid #FDE68A;
+}
+
+.gamble-note {
+  font-size: 0.78rem;
+  color: #B45309;
+  font-weight: 600;
+}
+
 /* ── soup note ── */
 .soup-note {
   font-size: 0.8rem;

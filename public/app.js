@@ -4,14 +4,15 @@ const CONFIG = {
 
 // ── 商品定義 ──
 const ITEMS = {
-  yakitori:        { name: "焼き鳥",       unit: "1本",        price: 100 },
-  chocoBananaFull: { name: "チョコバナナ", unit: "1本",        price: 500 },
-  chocoBananaHalf: { name: "チョコバナナ", unit: "半分",       price: 300 },
-  soup:            { name: "スープ",       unit: "紙コップ1杯", price: 200 },
+  yakitori:        { name: "焼き鳥",           unit: "1本",        price: 100 },
+  gambleYakitori:  { name: "ギャンブル焼き鳥", unit: "1回",        price: 500 },
+  chocoBananaFull: { name: "チョコバナナ",     unit: "1本",        price: 500 },
+  chocoBananaHalf: { name: "チョコバナナ",     unit: "半分",       price: 300 },
+  soup:            { name: "スープ",           unit: "紙コップ1杯", price: 200 },
 };
 
 // ── カート状態 ──
-const cart = { yakitori: 0, chocoBananaFull: 0, chocoBananaHalf: 0, soup: 0 };
+const cart = { yakitori: 0, gambleYakitori: 0, chocoBananaFull: 0, chocoBananaHalf: 0, soup: 0 };
 
 // ── 数量変更 ──
 function change(key, delta) {
