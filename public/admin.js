@@ -85,7 +85,7 @@ function renderOrderList() {
       String(o.id) === searchQuery || o.customer_name.includes(searchQuery));
   }
 
-  // 対応中は古い順（呼び出し順）、それ以外は新しい順
+  // 対応中は番号順（探しやすさ優先）、それ以外は新しい順
   orders.sort((a, b) => currentFilter === "active" ? a.id - b.id : b.id - a.id);
 
   const container = document.getElementById("orders-container");
@@ -103,8 +103,6 @@ function renderOrderCard(o) {
   const created = new Date(o.created_at);
   const time = created.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
   const date = created.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" });
-  const elapsed = Math.floor((Date.now() - created.getTime()) / 60000);
-  const elapsedLabel = !o.received ? `<span class="order-elapsed ${elapsed >= 10 ? "late" : ""}">${elapsed}分経過</span>` : "";
   const portions = `🍢${countPortions(o, "yakitori")}本・🥣${countPortions(o, "soup")}杯`;
 
   return `
@@ -113,7 +111,6 @@ function renderOrderCard(o) {
         <span class="order-no">No.${o.id}</span>
         <span class="order-customer">${esc(o.customer_name)} 様</span>
         <span class="order-time">${date} ${time}</span>
-        ${elapsedLabel}
       </div>
       <ul class="order-items">${items}</ul>
       <div class="order-card-foot">

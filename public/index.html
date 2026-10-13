@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>整理券発行</title>
+  <title>ご注文</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -66,23 +66,23 @@
 
       <div class="info-box">お支払いは受け取り時に現金でお願いします</div>
 
-      <p id="issue-error" class="issue-error" style="display:none">整理券の発行に失敗しました。もう一度お試しください。</p>
+      <p id="issue-error" class="issue-error" style="display:none">注文の送信に失敗しました。もう一度お試しください。</p>
 
       <div class="screen-actions">
-        <button id="btn-issue" class="btn-primary" onclick="issueTicket()" disabled>整理券を発行する</button>
+        <button id="btn-issue" class="btn-primary" onclick="issueTicket()" disabled>注文を確定する</button>
       </div>
     </main>
   </div>
 
-  <!-- ③ 整理券画面 -->
+  <!-- ③ 注文番号画面 -->
   <div id="screen-ticket" class="screen">
     <header class="page-header">
-      <h1>整理券</h1>
+      <h1>ご注文ありがとうございます</h1>
     </header>
 
     <main>
       <section class="ticket">
-        <p class="ticket-label">整理券番号</p>
+        <p class="ticket-label">注文番号</p>
         <p id="ticket-number" class="ticket-number"></p>
         <p id="ticket-name" class="ticket-name"></p>
       </section>
@@ -97,7 +97,7 @@
       </section>
 
       <div class="info-box">
-        番号を呼ばれたら、この画面をスタッフに見せて<br>現金でお支払いください
+        お好きなタイミングで、この画面をスタッフに見せて<br>現金でお支払いください
       </div>
 
       <div class="screen-actions">

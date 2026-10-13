@@ -31,7 +31,7 @@ async function initDb() {
   `);
 }
 
-// POST /api/orders — 注文を保存（返り値の id が整理券番号）
+// POST /api/orders — 注文を保存（返り値の id が注文番号）
 app.post("/api/orders", async (req, res) => {
   const { customerName, items, total } = req.body;
   if (!customerName || !Array.isArray(items) || items.length === 0 || total == null) {

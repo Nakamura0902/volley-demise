@@ -117,7 +117,7 @@ function goToConfirmScreen() {
   showScreen("confirm");
 }
 
-// ── 整理券を発行（注文を保存） ──
+// ── 注文を確定（保存して注文番号を受け取る） ──
 async function issueTicket() {
   const btn = document.getElementById("btn-issue");
   btn.disabled = true;
@@ -137,13 +137,13 @@ async function issueTicket() {
     try { localStorage.setItem(TICKET_STORAGE_KEY, JSON.stringify(order)); } catch {}
     showTicket(order);
   } catch {
-    // 整理券番号が必要なので、保存失敗時は再試行してもらう
+    // 注文番号が必要なので、保存失敗時は再試行してもらう
     document.getElementById("issue-error").style.display = "block";
     btn.disabled = false;
   }
 }
 
-// ── ③ 整理券表示 ──
+// ── ③ 注文番号表示 ──
 function showTicket(order) {
   document.getElementById("ticket-number").textContent = order.id;
   document.getElementById("ticket-name").textContent = `${order.customer_name} 様`;
@@ -164,7 +164,7 @@ function startNewOrder() {
 renderMenu();
 updateMenuUI();
 
-// 再読み込みしても整理券を表示し続ける
+// 再読み込みしても注文番号を表示し続ける
 try {
   const saved = JSON.parse(localStorage.getItem(TICKET_STORAGE_KEY));
   if (saved) showTicket(saved);
