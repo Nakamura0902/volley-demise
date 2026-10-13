@@ -1,4 +1,13 @@
 let adminKey = "";
+let allOrders = [];
+let currentFilter = "active"; // active: 対応中 / done: 完了 / all: すべて
+let searchQuery = "";
+
+const FILTERS = {
+  active: { label: "対応中", match: o => !o.received },
+  done:   { label: "完了",   match: o => o.received },
+  all:    { label: "すべて", match: () => true },
+};
 
 function login() {
   const pw = document.getElementById("admin-password").value;
@@ -10,9 +19,7 @@ function login() {
     })
     .then(data => {
       sessionStorage.setItem("adminKey", pw);
-      document.getElementById("login-overlay").style.display = "none";
-      document.getElementById("admin-content").style.display = "block";
-      renderOrders(data);
+      showAdmin(data);
     })
     .catch(err => {
       if (err.message === "unauthorized") {
@@ -21,9 +28,17 @@ function login() {
     });
 }
 
+function showAdmin(data) {
+  document.getElementById("login-overlay").style.display = "none";
+  document.getElementById("admin-content").style.display = "block";
+  renderOrders(data);
+  // 新しい注文を拾うため定期的に再取得
+  setInterval(loadOrders, 15000);
+}
+
 function loadOrders() {
   fetch("/api/orders?key=" + encodeURIComponent(adminKey))
-    .then(r => r.json())
+    .then(r => { if (!r.ok) throw new Error(); return r.json(); })
     .then(renderOrders)
     .catch(() => {
       document.getElementById("orders-container").innerHTML =
@@ -32,71 +47,103 @@ function loadOrders() {
 }
 
 function renderOrders(orders) {
+  allOrders = orders;
   renderStats(orders);
+  renderTabs();
+  renderOrderList();
+  document.getElementById("last-updated").textContent =
+    "最終更新 " + new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
 
-  if (orders.length === 0) {
-    document.getElementById("orders-container").innerHTML =
-      '<div class="empty-state">まだ注文がありません</div>';
-    return;
+function setFilter(key) {
+  currentFilter = key;
+  renderTabs();
+  renderOrderList();
+}
+
+function onSearchInput() {
+  searchQuery = document.getElementById("order-search").value.trim();
+  renderOrderList();
+}
+
+function renderTabs() {
+  document.getElementById("filter-tabs").innerHTML = Object.entries(FILTERS)
+    .map(([key, f]) => {
+      const count = allOrders.filter(f.match).length;
+      return `<button class="filter-tab ${key === currentFilter ? "active" : ""}" onclick="setFilter('${key}')">
+        ${f.label}<span class="filter-count">${count}</span>
+      </button>`;
+    })
+    .join("");
+}
+
+function renderOrderList() {
+  let orders = allOrders.filter(FILTERS[currentFilter].match);
+
+  if (searchQuery) {
+    orders = orders.filter(o =>
+      String(o.id) === searchQuery || o.customer_name.includes(searchQuery));
   }
 
-  const rows = orders.map(o => {
-    const items = (o.items || [])
-      .map(i => `${i.name}（${i.unit}）× ${i.qty}`)
-      .join("<br>");
-    const badge = o.payment_method === "paypay"
-      ? '<span class="badge badge-paypay">PayPay</span>'
-      : '<span class="badge badge-cash">現金</span>';
-    const time = new Date(o.created_at).toLocaleString("ja-JP", {
-      month: "numeric", day: "numeric",
-      hour: "2-digit", minute: "2-digit",
-    });
-    const receivedBtn = o.received
-      ? `<button class="btn-received received" onclick="toggleReceived(${o.id}, true)">受け取り済み ✓</button>`
-      : `<button class="btn-received"           onclick="toggleReceived(${o.id}, false)">未受け取り</button>`;
-    const paymentBtn = o.payment_method === "paypay"
-      ? (o.payment_confirmed
-          ? `<button class="btn-payment-confirm confirmed" onclick="togglePaymentConfirmed(${o.id}, true)">送金済み ✓</button>`
-          : `<button class="btn-payment-confirm"           onclick="togglePaymentConfirmed(${o.id}, false)">未確認</button>`)
-      : `<span class="badge badge-cash" style="font-size:0.75rem">現金</span>`;
-    return `
-      <tr id="order-row-${o.id}" class="${o.received ? "row-received" : ""}">
-        <td data-label="時刻">${time}</td>
-        <td data-label="お名前"><strong>${esc(o.customer_name)}</strong></td>
-        <td data-label="注文内容">${items}</td>
-        <td data-label="合計">¥${Number(o.total).toLocaleString()}</td>
-        <td data-label="支払方法">${badge}</td>
-        <td data-label="送金確認">${paymentBtn}</td>
-        <td data-label="受け取り">${receivedBtn}</td>
-        <td data-label="削除"><button class="btn-delete" onclick="deleteOrder(${o.id}, '${esc(o.customer_name)}')">削除</button></td>
-      </tr>`;
-  }).join("");
+  // 対応中は古い順（呼び出し順）、それ以外は新しい順
+  orders.sort((a, b) => currentFilter === "active" ? a.id - b.id : b.id - a.id);
 
-  document.getElementById("orders-container").innerHTML = `
-    <table class="order-table">
-      <thead>
-        <tr>
-          <th>時刻</th>
-          <th>お名前</th>
-          <th>注文内容</th>
-          <th>合計</th>
-          <th>支払方法</th>
-          <th>送金確認</th>
-          <th>受け取り</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>`;
+  const container = document.getElementById("orders-container");
+  if (orders.length === 0) {
+    container.innerHTML = `<div class="empty-state">${searchQuery ? "該当する注文がありません" : "注文はありません"}</div>`;
+    return;
+  }
+  container.innerHTML = orders.map(renderOrderCard).join("");
+}
+
+function renderOrderCard(o) {
+  const items = (o.items || [])
+    .map(i => `<li><span>${esc(i.name)}<small>（${esc(i.unit)}）</small></span><span>× ${i.qty}</span></li>`)
+    .join("");
+  const created = new Date(o.created_at);
+  const time = created.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+  const date = created.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" });
+  const elapsed = Math.floor((Date.now() - created.getTime()) / 60000);
+  const elapsedLabel = !o.received ? `<span class="order-elapsed ${elapsed >= 10 ? "late" : ""}">${elapsed}分経過</span>` : "";
+  const portions = `🍢${countPortions(o, "yakitori")}本・🥣${countPortions(o, "soup")}杯`;
+
+  return `
+    <article class="order-card ${o.received ? "is-done" : ""}">
+      <div class="order-card-head">
+        <span class="order-no">No.${o.id}</span>
+        <span class="order-customer">${esc(o.customer_name)} 様</span>
+        <span class="order-time">${date} ${time}</span>
+        ${elapsedLabel}
+      </div>
+      <ul class="order-items">${items}</ul>
+      <div class="order-card-foot">
+        <span class="order-portions">${portions}</span>
+        <span class="order-total-amount">¥${Number(o.total).toLocaleString()}</span>
+      </div>
+      <div class="order-actions">
+        <button class="btn-payment-confirm ${o.payment_confirmed ? "confirmed" : ""}" onclick="togglePaymentConfirmed(${o.id}, ${!!o.payment_confirmed})">
+          ${o.payment_confirmed ? "会計済み ✓" : "未会計"}
+        </button>
+        <button class="btn-received ${o.received ? "received" : ""}" onclick="toggleReceived(${o.id}, ${!!o.received})">
+          ${o.received ? "受け取り済み ✓" : "未受け取り"}
+        </button>
+        <button class="btn-delete" onclick="deleteOrder(${o.id})">削除</button>
+      </div>
+    </article>`;
+}
+
+// 注文に含まれる焼き鳥本数・スープ杯数（セット分も展開）
+function countPortions(order, field) {
+  return (order.items || []).reduce((s, i) => s + (i[field] || 0) * i.qty, 0);
 }
 
 function renderStats(orders) {
-  const totalSales = orders.reduce((s, o) => s + Number(o.total), 0);
-  const cashOrders = orders.filter(o => o.payment_method === "cash");
-  const paypayOrders = orders.filter(o => o.payment_method === "paypay");
-  const cashSales = cashOrders.reduce((s, o) => s + Number(o.total), 0);
-  const paypaySales = paypayOrders.reduce((s, o) => s + Number(o.total), 0);
-  const pendingCount = orders.filter(o => !o.received).length;
+  const paidOrders = orders.filter(o => o.payment_confirmed);
+  const paidSales = paidOrders.reduce((s, o) => s + Number(o.total), 0);
+  const unpaidSales = orders.filter(o => !o.payment_confirmed).reduce((s, o) => s + Number(o.total), 0);
+  const pendingOrders = orders.filter(o => !o.received);
+  const pendingYakitori = pendingOrders.reduce((s, o) => s + countPortions(o, "yakitori"), 0);
+  const pendingSoup = pendingOrders.reduce((s, o) => s + countPortions(o, "soup"), 0);
 
   document.getElementById("admin-stats").innerHTML = `
     <div class="stat-card">
@@ -104,89 +151,51 @@ function renderStats(orders) {
       <div class="stat-value">${orders.length}</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">売上合計</div>
-      <div class="stat-value">¥${totalSales.toLocaleString()}</div>
+      <div class="stat-label">💴 会計済み売上（${paidOrders.length}件）</div>
+      <div class="stat-value">¥${paidSales.toLocaleString()}</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">💴 現金売上（${cashOrders.length}件）</div>
-      <div class="stat-value">¥${cashSales.toLocaleString()}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">📱 PayPay売上（${paypayOrders.length}件）</div>
-      <div class="stat-value">¥${paypaySales.toLocaleString()}</div>
+      <div class="stat-label">未会計</div>
+      <div class="stat-value">¥${unpaidSales.toLocaleString()}</div>
     </div>
     <div class="stat-card stat-card-pending">
-      <div class="stat-label">未受け取り</div>
-      <div class="stat-value ${pendingCount > 0 ? "stat-pending" : ""}">${pendingCount}</div>
+      <div class="stat-label">未受け取り（${pendingOrders.length}件）</div>
+      <div class="stat-value ${pendingOrders.length > 0 ? "stat-pending" : ""}">🍢${pendingYakitori}本 🥣${pendingSoup}杯</div>
     </div>`;
 }
 
-function toggleReceived(id, current) {
-  const newVal = !current;
-  const row = document.getElementById("order-row-" + id);
-  const btn = row.querySelector(".btn-received");
-
-  // 楽観的UI更新
-  btn.textContent = newVal ? "受け取り済み ✓" : "未受け取り";
-  btn.classList.toggle("received", newVal);
-  row.classList.toggle("row-received", newVal);
-
-  fetch(`/api/orders/${id}/received?key=${encodeURIComponent(adminKey)}`, {
+// 状態を更新して再描画（失敗時は元の表示のまま）
+function updateOrder(id, field, body) {
+  fetch(`/api/orders/${id}/${field}?key=${encodeURIComponent(adminKey)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ received: newVal }),
+    body: JSON.stringify(body),
   })
     .then(r => { if (!r.ok) throw new Error(); return r.json(); })
     .then(updated => {
-      // onclick を新しい状態に更新
-      btn.setAttribute("onclick", `toggleReceived(${id}, ${updated.received})`);
-      // サマリーを再集計するため全データを再取得
-      loadOrders();
+      allOrders = allOrders.map(o => o.id === updated.id ? updated : o);
+      renderOrders(allOrders);
     })
-    .catch(() => {
-      // 失敗時は元に戻す
-      btn.textContent = current ? "受け取り済み ✓" : "未受け取り";
-      btn.classList.toggle("received", current);
-      row.classList.toggle("row-received", current);
-    });
+    .catch(() => alert("更新に失敗しました。もう一度お試しください。"));
+}
+
+function toggleReceived(id, current) {
+  updateOrder(id, "received", { received: !current });
 }
 
 function togglePaymentConfirmed(id, current) {
-  const newVal = !current;
-  const row = document.getElementById("order-row-" + id);
-  const btn = row.querySelector(".btn-payment-confirm");
-
-  btn.textContent = newVal ? "送金済み ✓" : "未確認";
-  btn.classList.toggle("confirmed", newVal);
-
-  fetch(`/api/orders/${id}/payment-confirmed?key=${encodeURIComponent(adminKey)}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ paymentConfirmed: newVal }),
-  })
-    .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-    .then(updated => {
-      btn.setAttribute("onclick", `togglePaymentConfirmed(${id}, ${updated.payment_confirmed})`);
-      loadOrders();
-    })
-    .catch(() => {
-      btn.textContent = current ? "送金済み ✓" : "未確認";
-      btn.classList.toggle("confirmed", current);
-    });
+  updateOrder(id, "payment-confirmed", { paymentConfirmed: !current });
 }
 
-function deleteOrder(id, name) {
-  if (!confirm(`「${name}」の注文を削除しますか？\nこの操作は元に戻せません。`)) return;
+function deleteOrder(id) {
+  const order = allOrders.find(o => o.id === id);
+  if (!confirm(`No.${id}「${order.customer_name}」の注文を削除しますか？\nこの操作は元に戻せません。`)) return;
 
   fetch(`/api/orders/${id}?key=${encodeURIComponent(adminKey)}`, {
     method: "DELETE",
   })
     .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-    .then(() => {
-      const row = document.getElementById("order-row-" + id);
-      row.classList.add("row-deleting");
-      setTimeout(() => { row.remove(); loadOrders(); }, 300);
-    })
+    .then(() => loadOrders())
     .catch(() => alert("削除に失敗しました。もう一度お試しください。"));
 }
 
@@ -194,7 +203,9 @@ function esc(str) {
   return String(str)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/>/g, "&gt;")
+    .replace(/'/g, "&#39;")
+    .replace(/"/g, "&quot;");
 }
 
 // セッションに保存済みのキーで自動ログイン
@@ -206,10 +217,6 @@ if (saved) {
       if (!r.ok) throw new Error();
       return r.json();
     })
-    .then(data => {
-      document.getElementById("login-overlay").style.display = "none";
-      document.getElementById("admin-content").style.display = "block";
-      renderOrders(data);
-    })
+    .then(showAdmin)
     .catch(() => sessionStorage.removeItem("adminKey"));
 }

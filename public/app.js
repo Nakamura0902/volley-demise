@@ -1,18 +1,51 @@
-const CONFIG = {
-  paypayId: "ayatin0092",
+// ── 商品定義 ──
+// yakitori / soup は 1つあたりに含まれる本数・杯数（調理・集計用）
+const SETS = {
+  setSolo:   { name: "ひとりセット",     desc: "焼き鳥3本＋スープ1杯",  price: 300,  regular: 400,  yakitori: 3,  soup: 1 },
+  setCoin:   { name: "ワンコインセット", desc: "焼き鳥6本＋スープ1杯",  price: 500,  regular: 700,  yakitori: 6,  soup: 1, badge: "人気No.1" },
+  setPair:   { name: "ペアセット",       desc: "焼き鳥8本＋スープ2杯",  price: 700,  regular: 1000, yakitori: 8,  soup: 2 },
+  setFamily: { name: "みんなでセット",   desc: "焼き鳥12本＋スープ4杯", price: 1000, regular: 1600, yakitori: 12, soup: 4, badge: "いちばんお得" },
 };
 
-// ── 商品定義 ──
-const ITEMS = {
-  yakitori:        { name: "焼き鳥",           unit: "1本",        price: 100 },
-  gambleYakitori:  { name: "ギャンブル焼き鳥", unit: "1回",        price: 500 },
-  chocoBananaFull: { name: "チョコバナナ",     unit: "1本",        price: 500 },
-  chocoBananaHalf: { name: "チョコバナナ",     unit: "半分",       price: 300 },
-  soup:            { name: "スープ",           unit: "紙コップ1杯", price: 200 },
+const SINGLES = {
+  yakitori: { name: "焼き鳥",       desc: "1本", price: 100, yakitori: 1, soup: 0 },
+  soup:     { name: "コンソメスープ", desc: "1杯", price: 100, yakitori: 0, soup: 1 },
 };
+
+const ITEMS = { ...SETS, ...SINGLES };
+const TICKET_STORAGE_KEY = "lastTicket";
 
 // ── カート状態 ──
-const cart = { yakitori: 0, gambleYakitori: 0, chocoBananaFull: 0, chocoBananaHalf: 0, soup: 0 };
+const cart = Object.fromEntries(Object.keys(ITEMS).map(key => [key, 0]));
+
+// ── メニュー描画 ──
+function renderMenuItem(key) {
+  const item = ITEMS[key];
+  const isSet = key in SETS;
+  const saving = isSet ? item.regular - item.price : 0;
+  return `
+    <div class="menu-item ${isSet ? "menu-item--set" : ""}">
+      <div class="menu-info">
+        <span class="menu-name">${item.name}${item.badge ? ` <span class="set-badge">${item.badge}</span>` : ""}</span>
+        <span class="menu-label">${item.desc}</span>
+        <span class="menu-price">
+          ${isSet ? `<s class="menu-regular">¥${item.regular.toLocaleString()}</s>` : ""}
+          ¥${item.price.toLocaleString()}
+          ${isSet ? `<span class="set-saving">¥${saving}お得</span>` : ""}
+        </span>
+      </div>
+      <div class="counter">
+        <button class="counter-btn" onclick="change('${key}', -1)">−</button>
+        <span class="counter-val" id="qty-${key}">0</span>
+        <button class="counter-btn" onclick="change('${key}', 1)">＋</button>
+      </div>
+    </div>`;
+}
+
+function renderMenu() {
+  document.getElementById("set-list").innerHTML = Object.keys(SETS).map(renderMenuItem).join("");
+  document.getElementById("single-list").innerHTML = Object.keys(SINGLES).map(renderMenuItem).join("");
+}
 
 // ── 数量変更 ──
 function change(key, delta) {
@@ -22,11 +55,10 @@ function change(key, delta) {
 
 // ── メニュー画面の表示更新 ──
 function updateMenuUI() {
-  let total = 0;
   for (const key in cart) {
     document.getElementById("qty-" + key).textContent = cart[key];
-    total += cart[key] * ITEMS[key].price;
   }
+  const total = calcTotal();
   document.getElementById("menu-total").textContent = "¥" + total.toLocaleString();
   document.getElementById("btn-order").disabled = total === 0;
 }
@@ -36,21 +68,6 @@ function calcTotal() {
   return Object.keys(cart).reduce((sum, key) => sum + cart[key] * ITEMS[key].price, 0);
 }
 
-// ── 注文内容 HTML を生成 ──
-function buildOrderSummaryHTML() {
-  return Object.keys(cart)
-    .filter(key => cart[key] > 0)
-    .map(key => {
-      const item = ITEMS[key];
-      const subtotal = cart[key] * item.price;
-      return `<li>
-        <span>${item.name}（${item.unit}）× ${cart[key]}</span>
-        <span class="item-price">¥${subtotal.toLocaleString()}</span>
-      </li>`;
-    })
-    .join("");
-}
-
 // ── 注文データを配列で返す ──
 function buildOrderItems() {
   return Object.keys(cart)
@@ -58,37 +75,29 @@ function buildOrderItems() {
     .map(key => ({
       key,
       name: ITEMS[key].name,
-      unit: ITEMS[key].unit,
+      unit: ITEMS[key].desc,
       qty: cart[key],
       price: ITEMS[key].price,
       subtotal: cart[key] * ITEMS[key].price,
+      yakitori: ITEMS[key].yakitori,
+      soup: ITEMS[key].soup,
     }));
 }
 
-// ── API: 注文を保存 ──
-async function saveOrder(paymentMethod) {
-  const name = document.getElementById("customer-name").value.trim();
-  try {
-    await fetch("/api/orders", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        customerName: name,
-        items: buildOrderItems(),
-        total: calcTotal(),
-        paymentMethod,
-      }),
-    });
-  } catch {
-    // 保存失敗しても注文フローは継続
-  }
+// ── 注文内容 HTML を生成 ──
+function buildOrderSummaryHTML(items) {
+  return items
+    .map(i => `<li>
+      <span>${i.name}（${i.unit}）× ${i.qty}</span>
+      <span class="item-price">¥${i.subtotal.toLocaleString()}</span>
+    </li>`)
+    .join("");
 }
 
 // ── 名前入力イベント ──
 function onNameInput() {
   const hasName = document.getElementById("customer-name").value.trim().length > 0;
-  document.getElementById("btn-cash").disabled = !hasName;
-  document.getElementById("btn-paypay").disabled = !hasName;
+  document.getElementById("btn-issue").disabled = !hasName;
 }
 
 // ── 画面切り替え ──
@@ -98,58 +107,65 @@ function showScreen(id) {
   window.scrollTo(0, 0);
 }
 
-// ── ② 支払い選択へ ──
-function goToPaymentScreen() {
-  const total = calcTotal();
-  document.getElementById("payment-order-list").innerHTML = buildOrderSummaryHTML();
-  document.getElementById("payment-total").textContent = "¥" + total.toLocaleString();
+// ── ② 確認画面へ ──
+function goToConfirmScreen() {
+  document.getElementById("confirm-order-list").innerHTML = buildOrderSummaryHTML(buildOrderItems());
+  document.getElementById("confirm-total").textContent = "¥" + calcTotal().toLocaleString();
   document.getElementById("customer-name").value = "";
-  document.getElementById("btn-cash").disabled = true;
-  document.getElementById("btn-paypay").disabled = true;
-  showScreen("payment");
+  document.getElementById("btn-issue").disabled = true;
+  document.getElementById("issue-error").style.display = "none";
+  showScreen("confirm");
 }
 
-// ── ③ 現金確認へ ──
-async function goToCashScreen() {
-  const name = document.getElementById("customer-name").value.trim();
-  await saveOrder("cash");
-  document.getElementById("cash-customer-name").textContent = `${name} 様`;
-  document.getElementById("cash-order-list").innerHTML = buildOrderSummaryHTML();
-  document.getElementById("cash-total").textContent = "¥" + calcTotal().toLocaleString();
-  document.getElementById("cash-soup-note").style.display = cart.soup > 0 ? "block" : "none";
-  showScreen("cash");
+// ── 整理券を発行（注文を保存） ──
+async function issueTicket() {
+  const btn = document.getElementById("btn-issue");
+  btn.disabled = true;
+  document.getElementById("issue-error").style.display = "none";
+  try {
+    const res = await fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customerName: document.getElementById("customer-name").value.trim(),
+        items: buildOrderItems(),
+        total: calcTotal(),
+      }),
+    });
+    if (!res.ok) throw new Error();
+    const order = await res.json();
+    try { localStorage.setItem(TICKET_STORAGE_KEY, JSON.stringify(order)); } catch {}
+    showTicket(order);
+  } catch {
+    // 整理券番号が必要なので、保存失敗時は再試行してもらう
+    document.getElementById("issue-error").style.display = "block";
+    btn.disabled = false;
+  }
 }
 
-// ── ④ PayPay送金へ ──
-async function goToPayPayScreen() {
-  const name = document.getElementById("customer-name").value.trim();
-  await saveOrder("paypay");
-  const total = calcTotal();
-  document.getElementById("paypay-amount").textContent = "¥" + total.toLocaleString();
-  document.getElementById("paypay-id").textContent = CONFIG.paypayId;
-  document.getElementById("paypay-name-hint").textContent = name;
-  document.getElementById("paypay-customer-name").textContent = `${name} 様`;
-  document.getElementById("paypay-order-list").innerHTML = buildOrderSummaryHTML();
-  document.getElementById("paypay-soup-note").style.display = cart.soup > 0 ? "block" : "none";
-  document.getElementById("copy-toast").style.display = "none";
-  showScreen("paypay");
+// ── ③ 整理券表示 ──
+function showTicket(order) {
+  document.getElementById("ticket-number").textContent = order.id;
+  document.getElementById("ticket-name").textContent = `${order.customer_name} 様`;
+  document.getElementById("ticket-order-list").innerHTML = buildOrderSummaryHTML(order.items);
+  document.getElementById("ticket-total").textContent = "¥" + Number(order.total).toLocaleString();
+  showScreen("ticket");
 }
 
-// ── PayPay ID コピー ──
-function copyPayPayId() {
-  navigator.clipboard.writeText(CONFIG.paypayId).then(() => {
-    const toast = document.getElementById("copy-toast");
-    toast.style.display = "block";
-    setTimeout(() => { toast.style.display = "none"; }, 2000);
-  });
-}
-
-// ── 最初に戻る ──
-function resetOrder() {
+// ── 新しく注文する ──
+function startNewOrder() {
+  try { localStorage.removeItem(TICKET_STORAGE_KEY); } catch {}
   for (const key in cart) cart[key] = 0;
   updateMenuUI();
   showScreen("menu");
 }
 
 // ── 初期化 ──
+renderMenu();
 updateMenuUI();
+
+// 再読み込みしても整理券を表示し続ける
+try {
+  const saved = JSON.parse(localStorage.getItem(TICKET_STORAGE_KEY));
+  if (saved) showTicket(saved);
+} catch {}

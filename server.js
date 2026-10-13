@@ -31,16 +31,16 @@ async function initDb() {
   `);
 }
 
-// POST /api/orders — 注文を保存
+// POST /api/orders — 注文を保存（返り値の id が整理券番号）
 app.post("/api/orders", async (req, res) => {
-  const { customerName, items, total, paymentMethod } = req.body;
-  if (!customerName || !items || total == null || !paymentMethod) {
+  const { customerName, items, total } = req.body;
+  if (!customerName || !Array.isArray(items) || items.length === 0 || total == null) {
     return res.status(400).json({ error: "missing fields" });
   }
   try {
     const result = await pool.query(
       "INSERT INTO orders (customer_name, items, total, payment_method) VALUES ($1, $2, $3, $4) RETURNING *",
-      [customerName, JSON.stringify(items), total, paymentMethod]
+      [customerName, JSON.stringify(items), total, "cash"]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -49,7 +49,7 @@ app.post("/api/orders", async (req, res) => {
   }
 });
 
-// PATCH /api/orders/:id/payment-confirmed?key=ADMIN_KEY — 送金確認ステータスを更新
+// PATCH /api/orders/:id/payment-confirmed?key=ADMIN_KEY — 会計済みステータスを更新
 app.patch("/api/orders/:id/payment-confirmed", async (req, res) => {
   if (req.query.key !== process.env.ADMIN_KEY) {
     return res.status(401).json({ error: "unauthorized" });
