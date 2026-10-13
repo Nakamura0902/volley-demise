@@ -17,6 +17,8 @@
     </header>
 
     <main class="menu-list">
+      <p id="menu-error" class="issue-error menu-error" style="display:none"></p>
+
       <h2 class="menu-section-title">🔥 お得なセット</h2>
       <div id="set-list"></div>
 
@@ -66,7 +68,7 @@
 
       <div class="info-box">お支払いは受け取り時に現金でお願いします</div>
 
-      <p id="issue-error" class="issue-error" style="display:none">注文の送信に失敗しました。もう一度お試しください。</p>
+      <p id="issue-error" class="issue-error" style="display:none"></p>
 
       <div class="screen-actions">
         <button id="btn-issue" class="btn-primary" onclick="issueTicket()" disabled>注文を確定する</button>
@@ -100,11 +102,11 @@
         お好きなタイミングで、この画面をスタッフに見せて<br>現金でお支払いください
       </div>
 
-      <p id="receive-error" class="issue-error" style="display:none">送信に失敗しました。もう一度お試しください。</p>
+      <p id="ticket-error" class="issue-error" style="display:none"></p>
 
       <div class="screen-actions">
-        <button id="btn-receive" class="btn-primary" onclick="markReceived()">受け取りました</button>
-        <button class="btn-secondary" onclick="startNewOrder()">新しく注文する</button>
+        <button class="btn-primary" onclick="markReceived()">受け取りました</button>
+        <button class="btn-text" onclick="cancelOrder()">注文を取り消す</button>
       </div>
     </main>
   </div>
@@ -118,7 +120,7 @@
     <main>
       <div class="done-message">
         <p class="done-icon">🍢</p>
-        <p class="done-title">ありがとうございました！</p>
+        <p id="done-title" class="done-title"></p>
         <p id="done-number" class="done-sub"></p>
       </div>
 

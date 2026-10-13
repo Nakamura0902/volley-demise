@@ -30,16 +30,37 @@
       </div>
     </div>
 
-    <div class="admin-stats" id="admin-stats"></div>
+    <nav class="view-tabs" id="view-tabs">
+      <button class="view-tab active" data-view="orders" onclick="setView('orders')">注文</button>
+      <button class="view-tab" data-view="stock" onclick="setView('stock')">在庫</button>
+      <button class="view-tab" data-view="report" onclick="setView('report')">集計</button>
+    </nav>
 
-    <div class="order-toolbar">
-      <div class="filter-tabs" id="filter-tabs"></div>
-      <input id="order-search" class="order-search" type="search" placeholder="注文番号・名前で検索" autofocus oninput="onSearchInput()">
-    </div>
+    <!-- 注文 -->
+    <section id="view-orders" class="admin-view active">
+      <div class="admin-stats" id="admin-stats"></div>
 
-    <div id="orders-container">
-      <div class="empty-state">読み込み中...</div>
-    </div>
+      <div class="order-toolbar">
+        <div class="filter-tabs" id="filter-tabs"></div>
+        <input id="order-search" class="order-search" type="search" placeholder="注文番号・名前で検索" autofocus oninput="onSearchInput()">
+      </div>
+
+      <div id="orders-container">
+        <div class="empty-state">読み込み中...</div>
+      </div>
+    </section>
+
+    <!-- 在庫 -->
+    <section id="view-stock" class="admin-view">
+      <p class="view-note">残り数を入れると、注文ごとに自動で減り、足りなくなったメニューはお客様画面で「売り切れ」になります。空欄にすると無制限です。</p>
+      <div id="stock-container"></div>
+    </section>
+
+    <!-- 集計 -->
+    <section id="view-report" class="admin-view">
+      <p class="view-note">完了（会計・受け取り済み）の注文のみ集計しています。原価：焼き鳥 30円/本、スープ 約3円/杯</p>
+      <div id="report-container"></div>
+    </section>
   </div>
 
   <script src="admin.js"></script>

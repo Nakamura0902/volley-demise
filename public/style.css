@@ -391,6 +391,36 @@ html, body {
   padding: 0 16px;
 }
 
+.menu-error {
+  margin: 12px 16px 0;
+}
+
+.btn-text {
+  display: block;
+  margin: 16px auto 0;
+  background: none;
+  border: none;
+  color: var(--text-sub);
+  font-size: 0.85rem;
+  font-family: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.menu-item.is-sold-out .menu-info {
+  opacity: 0.45;
+}
+
+.sold-out-label {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: #F5F5F4;
+  color: var(--text-sub);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
 .done-message {
   text-align: center;
   padding: 48px 16px 32px;
@@ -642,9 +672,172 @@ main {
   gap: 6px;
 }
 
-.order-actions .btn-payment-confirm,
 .order-actions .btn-received {
   flex: 1;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+}
+
+.order-actions .btn-received:not(.received) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--white);
+}
+
+/* ── admin views ── */
+.view-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.view-tab {
+  border: none;
+  background: none;
+  padding: 8px 18px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--text-sub);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+}
+
+.view-tab.active {
+  color: var(--accent-dark);
+  border-bottom-color: var(--accent);
+}
+
+.admin-view { display: none; }
+.admin-view.active { display: block; }
+
+.view-note {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  margin-bottom: 14px;
+}
+
+.stat-card .stat-value-sm {
+  font-size: 1.15rem;
+  line-height: 1.6;
+}
+
+/* ── stock ── */
+#stock-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.stock-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stock-card.is-sold-out {
+  border-color: #FECACA;
+  background: #FFF5F5;
+}
+
+.stock-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.stock-name { font-weight: 700; }
+
+.stock-current {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.stock-card.is-sold-out .stock-current { color: var(--red); }
+
+.stock-form {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.stock-input {
+  width: 90px;
+  height: 38px;
+  margin: 0 4px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 0 10px;
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+}
+
+.stock-input:focus { border-color: var(--accent); }
+
+.btn-sold-out {
+  padding: 8px;
+  border-radius: 8px;
+  border: 2px solid #FECACA;
+  background: var(--white);
+  color: var(--red);
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.btn-sold-out.active {
+  border-color: #86EFAC;
+  color: #15803D;
+}
+
+/* ── report ── */
+.report-table-wrap {
+  overflow-x: auto;
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.report-table th,
+.report-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+}
+
+.report-table th:first-child,
+.report-table td:first-child {
+  text-align: left;
+}
+
+.report-table th {
+  background: #F5F5F4;
+  font-size: 0.8rem;
+  color: var(--text-sub);
+}
+
+.report-table tfoot td {
+  font-weight: 700;
+  border-bottom: none;
+  border-top: 2px solid var(--border);
 }
 
 .btn-refresh {
@@ -730,25 +923,7 @@ main {
 }
 
 
-.btn-payment-confirm {
-  padding: 5px 12px;
-  border-radius: 20px;
-  border: 2px solid #FECACA;
-  background: #FFF0F0;
-  color: var(--red);
-  font-size: 0.8rem;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s;
-}
 
-.btn-payment-confirm.confirmed {
-  background: #F0FDF4;
-  color: #15803D;
-  border-color: #86EFAC;
-}
 
 .btn-received {
   padding: 5px 12px;
