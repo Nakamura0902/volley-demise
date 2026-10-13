@@ -391,6 +391,26 @@ html, body {
   padding: 0 16px;
 }
 
+.done-message {
+  text-align: center;
+  padding: 48px 16px 32px;
+}
+
+.done-icon {
+  font-size: 3.5rem;
+}
+
+.done-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+.done-sub {
+  color: var(--text-sub);
+  margin-top: 4px;
+}
+
 /* ── confirm screen ── */
 main {
   padding: 0 0 24px;

@@ -1,6 +1,7 @@
 const express = require("express");
 const { Pool } = require("pg");
 const path = require("path");
+const crypto = require("crypto");
 
 const app = express();
 const pool = new Pool({
@@ -29,6 +30,10 @@ async function initDb() {
   await pool.query(`
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_confirmed BOOLEAN DEFAULT FALSE
   `);
+  // お客様が自分の注文だけを「受け取り済み」にできるよう、注文ごとの秘密トークン
+  await pool.query(`
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS token VARCHAR(32)
+  `);
 }
 
 // POST /api/orders — 注文を保存（返り値の id が注文番号）
@@ -39,10 +44,29 @@ app.post("/api/orders", async (req, res) => {
   }
   try {
     const result = await pool.query(
-      "INSERT INTO orders (customer_name, items, total, payment_method) VALUES ($1, $2, $3, $4) RETURNING *",
-      [customerName, JSON.stringify(items), total, "cash"]
+      "INSERT INTO orders (customer_name, items, total, payment_method, token) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [customerName, JSON.stringify(items), total, "cash", crypto.randomBytes(16).toString("hex")]
     );
     res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "db error" });
+  }
+});
+
+// POST /api/orders/:id/receive — お客様が「受け取りました」を押したとき（トークンで本人確認）
+app.post("/api/orders/:id/receive", async (req, res) => {
+  const { token } = req.body;
+  if (typeof token !== "string" || !token) {
+    return res.status(400).json({ error: "token required" });
+  }
+  try {
+    const result = await pool.query(
+      "UPDATE orders SET received = TRUE WHERE id = $1 AND token = $2 RETURNING id",
+      [req.params.id, token]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: "not found" });
+    res.json({ received: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "db error" });

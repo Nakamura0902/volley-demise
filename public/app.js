@@ -14,6 +14,7 @@ const SINGLES = {
 
 const ITEMS = { ...SETS, ...SINGLES };
 const TICKET_STORAGE_KEY = "lastTicket";
+let currentOrder = null; // 注文番号画面に表示中の注文
 
 // ── カート状態 ──
 const cart = Object.fromEntries(Object.keys(ITEMS).map(key => [key, 0]));
@@ -145,11 +146,37 @@ async function issueTicket() {
 
 // ── ③ 注文番号表示 ──
 function showTicket(order) {
+  currentOrder = order;
+  document.getElementById("receive-error").style.display = "none";
   document.getElementById("ticket-number").textContent = order.id;
   document.getElementById("ticket-name").textContent = `${order.customer_name} 様`;
   document.getElementById("ticket-order-list").innerHTML = buildOrderSummaryHTML(order.items);
   document.getElementById("ticket-total").textContent = "¥" + Number(order.total).toLocaleString();
   showScreen("ticket");
+}
+
+// ── 受け取りました ──
+async function markReceived() {
+  if (!confirm("商品を受け取りましたか？")) return;
+  const order = currentOrder;
+  const btn = document.getElementById("btn-receive");
+  btn.disabled = true;
+  document.getElementById("receive-error").style.display = "none";
+  try {
+    const res = await fetch(`/api/orders/${order.id}/receive`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: order.token }),
+    });
+    if (!res.ok) throw new Error();
+    try { localStorage.removeItem(TICKET_STORAGE_KEY); } catch {}
+    document.getElementById("done-number").textContent = `注文番号 ${order.id}`;
+    showScreen("done");
+  } catch {
+    document.getElementById("receive-error").style.display = "block";
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 // ── 新しく注文する ──

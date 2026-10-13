@@ -100,8 +100,30 @@
         お好きなタイミングで、この画面をスタッフに見せて<br>現金でお支払いください
       </div>
 
+      <p id="receive-error" class="issue-error" style="display:none">送信に失敗しました。もう一度お試しください。</p>
+
       <div class="screen-actions">
+        <button id="btn-receive" class="btn-primary" onclick="markReceived()">受け取りました</button>
         <button class="btn-secondary" onclick="startNewOrder()">新しく注文する</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- ④ 受け取り完了画面 -->
+  <div id="screen-done" class="screen">
+    <header class="page-header">
+      <h1>お受け取り完了</h1>
+    </header>
+
+    <main>
+      <div class="done-message">
+        <p class="done-icon">🍢</p>
+        <p class="done-title">ありがとうございました！</p>
+        <p id="done-number" class="done-sub"></p>
+      </div>
+
+      <div class="screen-actions">
+        <button class="btn-primary" onclick="startNewOrder()">新しく注文する</button>
       </div>
     </main>
   </div>
